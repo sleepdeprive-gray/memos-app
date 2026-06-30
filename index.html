@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memos Collage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow" aria-hidden="true"></div>
+
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">Shared memory wall</p>
+        <h1>Animated moments collage</h1>
+        <p class="subtitle">
+          Endless horizontal photo cards inspired by your reference layout.
+          Upload and delete are protected by your admin PIN.
+        </p>
+      </header>
+
+      <section class="admin-panel" aria-label="Admin controls">
+        <div class="admin-lock" id="adminLockPanel">
+          <label for="pinInput">Admin PIN</label>
+          <div class="row">
+            <input id="pinInput" type="password" placeholder="Enter shared PIN" />
+            <button id="unlockBtn" type="button">Unlock</button>
+          </div>
+          <p class="hint" id="authHint">Locked mode: upload and delete are hidden.</p>
+        </div>
+
+        <div class="admin-upload hidden" id="adminUploadPanel">
+          <label for="uploadInput">Upload image</label>
+          <div class="row">
+            <input id="uploadInput" type="file" accept="image/*" />
+            <button id="uploadBtn" type="button">Upload</button>
+          </div>
+          <p class="hint">
+            Max 32 MB per image. Uploaded photos are shared with all visitors.
+          </p>
+        </div>
+      </section>
+
+      <section class="marquee-wrap" aria-label="Photo collage">
+        <div class="marquee" id="marquee"></div>
+      </section>
+    </main>
+
+    <template id="cardTemplate">
+      <article class="card">
+        <img loading="lazy" alt="" />
+        <button class="delete-btn" type="button" aria-label="Delete image">Delete</button>
+      </article>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "image-uploader-collage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo \"Static site - no build step\"",
+    "deploy:prod": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

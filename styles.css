@@ -1,0 +1,313 @@
+:root {
+  --bg: #f5f2eb;
+  --ink: #2b201a;
+  --muted: #65584f;
+  --panel: rgba(255, 255, 255, 0.76);
+  --line: rgba(85, 69, 58, 0.2);
+  --accent: #ca683b;
+  --accent-strong: #b14f24;
+  --shadow: 0 18px 36px rgba(52, 32, 20, 0.14);
+  --radius: 16px;
+  --lane-gap: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Manrope", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 10% 20%, rgba(228, 194, 149, 0.34), transparent 35%),
+    radial-gradient(circle at 90% 80%, rgba(179, 204, 180, 0.38), transparent 34%),
+    var(--bg);
+}
+
+.page-glow {
+  position: fixed;
+  inset: -20% -10% auto;
+  height: 46vh;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+  filter: blur(40px);
+  z-index: 0;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1320px, 96vw);
+  margin: 24px auto 32px;
+}
+
+.hero {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 26px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+h1 {
+  margin: 8px 0 0;
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  font-size: clamp(1.7rem, 3vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 10px 0 0;
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.admin-panel {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.admin-lock,
+.admin-upload {
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.74);
+  padding: 14px;
+  box-shadow: 0 12px 26px rgba(41, 28, 21, 0.08);
+}
+
+label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+input[type="password"],
+input[type="file"] {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(82, 66, 55, 0.26);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 12px;
+  color: var(--ink);
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  background: var(--accent-strong);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #2c758f;
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.marquee-wrap {
+  margin-top: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(104, 85, 71, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  padding: 16px;
+}
+
+.marquee {
+  display: grid;
+  gap: var(--lane-gap);
+}
+
+.lane {
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation-name: slide-left;
+  animation-duration: var(--duration, 48s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.track.right {
+  animation-name: slide-right;
+}
+
+.marquee:hover .track,
+.marquee:focus-within .track {
+  animation-play-state: paused;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 6px solid #ffffff;
+  box-shadow: 0 16px 24px rgba(39, 25, 17, 0.13);
+  background: #e9e1d8;
+  flex: 0 0 auto;
+}
+
+.card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card.size-a {
+  width: clamp(160px, 22vw, 250px);
+  aspect-ratio: 3 / 4;
+}
+
+.card.size-b {
+  width: clamp(178px, 25vw, 310px);
+  aspect-ratio: 16 / 10;
+}
+
+.card.size-c {
+  width: clamp(170px, 23vw, 270px);
+  aspect-ratio: 1 / 1;
+}
+
+.card.size-d {
+  width: clamp(160px, 20vw, 240px);
+  aspect-ratio: 4 / 5;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border-radius: 999px;
+  background: rgba(38, 26, 18, 0.78);
+  color: #fff;
+  font-size: 0.76rem;
+  padding: 7px 10px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.card:hover .delete-btn,
+.card:focus-within .delete-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes slide-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes slide-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    width: min(1200px, 97vw);
+  }
+
+  .marquee-wrap {
+    padding: 12px;
+  }
+
+  .track {
+    gap: 10px;
+  }
+
+  .card {
+    border-width: 5px;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    margin-top: 14px;
+  }
+
+  .hero {
+    padding: 16px;
+  }
+
+  .admin-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .card.size-a,
+  .card.size-b,
+  .card.size-c,
+  .card.size-d {
+    width: clamp(140px, 44vw, 220px);
+  }
+
+  .track {
+    --duration: 36s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+
+  button,
+  .delete-btn {
+    transition: none;
+  }
+}
