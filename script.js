@@ -1,7 +1,9 @@
 const TOKEN_STORAGE_KEY = "memos_admin_token";
 const TOKEN_EXP_STORAGE_KEY = "memos_admin_token_exp";
-const SIZE_CLASSES = ["size-a", "size-b", "size-c", "size-d"];
-const LANE_COUNT = 4;
+const DEFAULT_ZOOM = 1;
+const ZOOM_STEP = 0.1;
+const MIN_ZOOM = 0.8;
+const MAX_ZOOM = 1.25;
 
 const PLACEHOLDER_IMAGES = [
   { id: "ph-1015", source: "placeholder", title: "Placeholder 1", url: "https://picsum.photos/id/1015/1200/900", thumbUrl: "https://picsum.photos/id/1015/600/400" },
@@ -23,13 +25,16 @@ const state = {
   tokenExp: Number(localStorage.getItem(TOKEN_EXP_STORAGE_KEY) || 0),
   uploadedImages: [],
   imageMap: new Map(),
-  selectedKey: ""
+  selectedKey: "",
+  zoom: DEFAULT_ZOOM
 };
 
 const marqueeEl = document.getElementById("marquee");
 const cardTemplate = document.getElementById("cardTemplate");
 const loadingOverlayEl = document.getElementById("loadingOverlay");
 const loadingPercentEl = document.getElementById("loadingPercent");
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
 
 const manageBtn = document.getElementById("manageBtn");
 const manageBtnIcon = document.getElementById("manageBtnIcon");
@@ -75,7 +80,7 @@ function clearSession() {
 
 function setAuthHint(message, isError = false) {
   authHint.textContent = message;
-  authHint.style.color = isError ? "#ffd1d1" : "#ffb8b8";
+  authHint.style.color = isError ? "#b91c1c" : "#64748b";
 }
 
 function syncManageButtonState() {
@@ -110,6 +115,15 @@ function rotateItems(items, offset) {
   }
   const start = offset % items.length;
   return items.slice(start).concat(items.slice(0, start));
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function applyZoom() {
+  marqueeEl.style.transform = `scale(${state.zoom})`;
+  marqueeEl.style.transformOrigin = "center center";
 }
 
 async function apiRequest(path, options = {}) {
@@ -162,7 +176,7 @@ function renderUploadingList(items) {
   if (!items.length) {
     const empty = document.createElement("p");
     empty.textContent = "No files selected.";
-    empty.style.color = "#ffb8b8";
+    empty.style.color = "#64748b";
     uploadingList.appendChild(empty);
     return;
   }
@@ -181,41 +195,82 @@ function renderWall() {
   marqueeEl.innerHTML = "";
   state.imageMap.clear();
 
-  const images = allImages();
+  const images = allImages().slice(0, 3);
   images.forEach((image) => {
     state.imageMap.set(imageKey(image), image);
   });
 
-  for (let laneIndex = 0; laneIndex < LANE_COUNT; laneIndex += 1) {
-    const lane = document.createElement("div");
-    lane.className = "lane";
-
-    const track = document.createElement("div");
-    track.className = `track ${laneIndex % 2 ? "right" : "left"}`;
-    track.style.setProperty("--duration", `${42 + laneIndex * 9}s`);
-
-    const rotated = rotateItems(images, laneIndex);
-
-    for (let pass = 0; pass < 2; pass += 1) {
-      rotated.forEach((image, idx) => {
-        const card = cardTemplate.content.firstElementChild.cloneNode(true);
-        const itemIndex = idx + pass * rotated.length + laneIndex;
-        const key = imageKey(image);
-
-        card.classList.add(SIZE_CLASSES[itemIndex % SIZE_CLASSES.length]);
-        card.dataset.key = key;
-
-        const img = card.querySelector("img");
-        img.src = image.thumbUrl || image.url;
-        img.alt = image.title || "Memos photo";
-
-        track.appendChild(card);
-      });
-    }
-
-    lane.appendChild(track);
-    marqueeEl.appendChild(lane);
+  if (!images.length) {
+    return;
   }
+
+  const carousel = document.createElement("section");
+  carousel.className = "carousel";
+
+  const viewport = document.createElement("div");
+  viewport.className = "viewport";
+
+  const track = document.createElement("div");
+  track.className = "track";
+  track.style.setProperty("--duration", "14s");
+
+  const sequence = [images[0], images[1] || images[0], images[2] || images[0], images[0], images[1] || images[0], images[2] || images[0]];
+
+  sequence.forEach((image) => {
+    const slide = document.createElement("div");
+    slide.className = "slide";
+
+    const card = cardTemplate.content.firstElementChild.cloneNode(true);
+    const key = imageKey(image);
+    card.dataset.key = key;
+
+    const img = card.querySelector("img");
+    img.src = image.thumbUrl || image.url;
+    img.alt = image.title || "Memos photo";
+
+    slide.appendChild(card);
+    track.appendChild(slide);
+  });
+
+  viewport.appendChild(track);
+  carousel.appendChild(viewport);
+
+  const controls = document.createElement("div");
+  controls.className = "carousel-controls";
+
+  const prevBtn = document.createElement("button");
+  prevBtn.type = "button";
+  prevBtn.className = "carousel-nav";
+  prevBtn.textContent = "\u2039";
+
+  const nextBtn = document.createElement("button");
+  nextBtn.type = "button";
+  nextBtn.className = "carousel-nav";
+  nextBtn.textContent = "\u203a";
+
+  const setManualOffset = (direction) => {
+    track.classList.add("paused");
+    const step = marqueeEl.clientWidth / 3;
+    const current = Number(track.dataset.offset || 0);
+    const next = current + direction * step;
+    track.dataset.offset = String(next);
+    track.style.transform = `translateX(${next}px)`;
+    setTimeout(() => {
+      track.classList.remove("paused");
+      track.style.removeProperty("transform");
+      track.dataset.offset = "0";
+    }, 260);
+  };
+
+  prevBtn.addEventListener("click", () => setManualOffset(1));
+  nextBtn.addEventListener("click", () => setManualOffset(-1));
+
+  controls.appendChild(prevBtn);
+  controls.appendChild(nextBtn);
+  carousel.appendChild(controls);
+
+  marqueeEl.appendChild(carousel);
+  applyZoom();
 }
 
 function renderManageList() {
@@ -224,7 +279,7 @@ function renderManageList() {
   if (!state.uploadedImages.length) {
     const empty = document.createElement("p");
     empty.textContent = "No uploaded photos yet.";
-    empty.style.color = "#ffb8b8";
+    empty.style.color = "#64748b";
     manageList.appendChild(empty);
     return;
   }
@@ -448,6 +503,14 @@ closeUploadBtn.addEventListener("click", () => closeModal(uploadModal));
 closePreviewBtn.addEventListener("click", () => closeModal(previewModal));
 unlockBtn.addEventListener("click", unlockWithPin);
 uploadBtn.addEventListener("click", uploadPhoto);
+zoomInBtn?.addEventListener("click", () => {
+  state.zoom = clamp(Number((state.zoom + ZOOM_STEP).toFixed(2)), MIN_ZOOM, MAX_ZOOM);
+  applyZoom();
+});
+zoomOutBtn?.addEventListener("click", () => {
+  state.zoom = clamp(Number((state.zoom - ZOOM_STEP).toFixed(2)), MIN_ZOOM, MAX_ZOOM);
+  applyZoom();
+});
 
 manageList.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
