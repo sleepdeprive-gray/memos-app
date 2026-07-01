@@ -1,9 +1,6 @@
 const TOKEN_STORAGE_KEY = "memos_admin_token";
 const TOKEN_EXP_STORAGE_KEY = "memos_admin_token_exp";
-const DEFAULT_ZOOM = 1;
-const ZOOM_STEP = 0.1;
-const MIN_ZOOM = 0.8;
-const MAX_ZOOM = 1.25;
+const CAROUSEL_VISIBLE_COUNT = 3;
 
 const PLACEHOLDER_IMAGES = [
   { id: "ph-1015", source: "placeholder", title: "Placeholder 1", url: "https://picsum.photos/id/1015/1200/900", thumbUrl: "https://picsum.photos/id/1015/600/400" },
@@ -25,19 +22,16 @@ const state = {
   tokenExp: Number(localStorage.getItem(TOKEN_EXP_STORAGE_KEY) || 0),
   uploadedImages: [],
   imageMap: new Map(),
-  selectedKey: "",
-  zoom: DEFAULT_ZOOM
+  selectedKey: ""
 };
 
 const marqueeEl = document.getElementById("marquee");
 const cardTemplate = document.getElementById("cardTemplate");
-const loadingOverlayEl = document.getElementById("loadingOverlay");
-const loadingPercentEl = document.getElementById("loadingPercent");
-const zoomInBtn = document.getElementById("zoomInBtn");
-const zoomOutBtn = document.getElementById("zoomOutBtn");
 
 const manageBtn = document.getElementById("manageBtn");
 const manageBtnIcon = document.getElementById("manageBtnIcon");
+const manageIcon = manageBtnIcon.querySelector(".icon-manage");
+const uploadIcon = manageBtnIcon.querySelector(".icon-upload");
 const manageBtnLabel = document.getElementById("manageBtnLabel");
 const pinModal = document.getElementById("pinModal");
 const closePinBtn = document.getElementById("closePinBtn");
@@ -85,10 +79,12 @@ function setAuthHint(message, isError = false) {
 
 function syncManageButtonState() {
   if (isAdmin()) {
-    manageBtnIcon.textContent = "⬆️";
+    manageIcon.classList.add("hidden");
+    uploadIcon.classList.remove("hidden");
     manageBtnLabel.textContent = "Upload Photos";
   } else {
-    manageBtnIcon.textContent = "🗂️";
+    manageIcon.classList.remove("hidden");
+    uploadIcon.classList.add("hidden");
     manageBtnLabel.textContent = "Manage Photos";
   }
 }
@@ -107,23 +103,6 @@ function imageKey(image) {
 
 function allImages() {
   return [...state.uploadedImages, ...PLACEHOLDER_IMAGES];
-}
-
-function rotateItems(items, offset) {
-  if (!items.length) {
-    return [];
-  }
-  const start = offset % items.length;
-  return items.slice(start).concat(items.slice(0, start));
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function applyZoom() {
-  marqueeEl.style.transform = `scale(${state.zoom})`;
-  marqueeEl.style.transformOrigin = "center center";
 }
 
 async function apiRequest(path, options = {}) {
@@ -168,10 +147,6 @@ async function fetchUploadedImages() {
 }
 
 function renderUploadingList(items) {
-  if (!uploadingList) {
-    return;
-  }
-
   uploadingList.innerHTML = "";
   if (!items.length) {
     const empty = document.createElement("p");
@@ -191,18 +166,67 @@ function renderUploadingList(items) {
   });
 }
 
+function startSmoothLoop(track) {
+  track.classList.add("fallback-css-loop");
+
+  let rafId = 0;
+  let lastTs = 0;
+  let offset = 0;
+  const speedPxPerSecond = 42;
+
+  const step = (ts) => {
+    if (!lastTs) {
+      lastTs = ts;
+    }
+
+    const elapsed = (ts - lastTs) / 1000;
+    lastTs = ts;
+    offset += speedPxPerSecond * elapsed;
+
+    const half = track.scrollWidth / 2;
+    if (half <= 0) {
+      rafId = requestAnimationFrame(step);
+      return;
+    }
+
+    if (half > 0 && offset >= half) {
+      offset -= half;
+    }
+
+    track.style.transform = `translate3d(${-offset}px, 0, 0)`;
+    rafId = requestAnimationFrame(step);
+  };
+
+  const stop = () => {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  };
+
+  track.addEventListener("mouseenter", stop);
+  track.addEventListener("mouseleave", () => {
+    lastTs = 0;
+    if (!rafId) {
+      rafId = requestAnimationFrame(step);
+    }
+  });
+
+  rafId = requestAnimationFrame(step);
+}
+
 function renderWall() {
   marqueeEl.innerHTML = "";
   state.imageMap.clear();
 
-  const images = allImages().slice(0, 3);
-  images.forEach((image) => {
-    state.imageMap.set(imageKey(image), image);
-  });
-
+  const images = allImages().slice(0, CAROUSEL_VISIBLE_COUNT);
   if (!images.length) {
     return;
   }
+
+  images.forEach((image) => {
+    state.imageMap.set(imageKey(image), image);
+  });
 
   const carousel = document.createElement("section");
   carousel.className = "carousel";
@@ -212,10 +236,8 @@ function renderWall() {
 
   const track = document.createElement("div");
   track.className = "track";
-  track.style.setProperty("--duration", "14s");
 
-  const sequence = [images[0], images[1] || images[0], images[2] || images[0], images[0], images[1] || images[0], images[2] || images[0]];
-
+  const sequence = images.concat(images);
   sequence.forEach((image) => {
     const slide = document.createElement("div");
     slide.className = "slide";
@@ -234,43 +256,9 @@ function renderWall() {
 
   viewport.appendChild(track);
   carousel.appendChild(viewport);
-
-  const controls = document.createElement("div");
-  controls.className = "carousel-controls";
-
-  const prevBtn = document.createElement("button");
-  prevBtn.type = "button";
-  prevBtn.className = "carousel-nav";
-  prevBtn.textContent = "\u2039";
-
-  const nextBtn = document.createElement("button");
-  nextBtn.type = "button";
-  nextBtn.className = "carousel-nav";
-  nextBtn.textContent = "\u203a";
-
-  const setManualOffset = (direction) => {
-    track.classList.add("paused");
-    const step = marqueeEl.clientWidth / 3;
-    const current = Number(track.dataset.offset || 0);
-    const next = current + direction * step;
-    track.dataset.offset = String(next);
-    track.style.transform = `translateX(${next}px)`;
-    setTimeout(() => {
-      track.classList.remove("paused");
-      track.style.removeProperty("transform");
-      track.dataset.offset = "0";
-    }, 260);
-  };
-
-  prevBtn.addEventListener("click", () => setManualOffset(1));
-  nextBtn.addEventListener("click", () => setManualOffset(-1));
-
-  controls.appendChild(prevBtn);
-  controls.appendChild(nextBtn);
-  carousel.appendChild(controls);
-
   marqueeEl.appendChild(carousel);
-  applyZoom();
+
+  startSmoothLoop(track);
 }
 
 function renderManageList() {
@@ -328,7 +316,7 @@ function openPreview(key) {
   state.selectedKey = key;
   previewImage.src = image.url;
   previewImage.alt = image.title || "Preview";
-  previewCaption.textContent = image.title || "";
+  previewCaption.textContent = "";
 
   downloadBtn.href = image.url;
   downloadBtn.setAttribute("download", `${(image.title || "memos-photo").replace(/\s+/g, "-").toLowerCase()}.jpg`);
@@ -394,7 +382,7 @@ async function unlockWithPin() {
     setAuthHint(error.message || "PIN invalid.", true);
   } finally {
     unlockBtn.disabled = false;
-    unlockBtn.textContent = "Unlock";
+    unlockBtn.textContent = "Sign in";
   }
 }
 
@@ -459,27 +447,6 @@ async function refreshGallery() {
   renderManageList();
 }
 
-function runLoadingOverlay() {
-  const duration = 1500 + Math.floor(Math.random() * 1501);
-  const startedAt = Date.now();
-
-  return new Promise((resolve) => {
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const ratio = Math.min(1, elapsed / duration);
-      const value = Math.min(100, Math.floor(ratio * 100));
-      loadingPercentEl.textContent = `${value}%`;
-    }, 60);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      loadingPercentEl.textContent = "100%";
-      loadingOverlayEl.classList.add("hide");
-      setTimeout(resolve, 420);
-    }, duration);
-  });
-}
-
 marqueeEl.addEventListener("click", (event) => {
   const card = event.target.closest(".card");
   if (!card || !card.dataset.key) {
@@ -503,14 +470,6 @@ closeUploadBtn.addEventListener("click", () => closeModal(uploadModal));
 closePreviewBtn.addEventListener("click", () => closeModal(previewModal));
 unlockBtn.addEventListener("click", unlockWithPin);
 uploadBtn.addEventListener("click", uploadPhoto);
-zoomInBtn?.addEventListener("click", () => {
-  state.zoom = clamp(Number((state.zoom + ZOOM_STEP).toFixed(2)), MIN_ZOOM, MAX_ZOOM);
-  applyZoom();
-});
-zoomOutBtn?.addEventListener("click", () => {
-  state.zoom = clamp(Number((state.zoom - ZOOM_STEP).toFixed(2)), MIN_ZOOM, MAX_ZOOM);
-  applyZoom();
-});
 
 manageList.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
@@ -537,22 +496,12 @@ previewDeleteBtn.addEventListener("click", async () => {
   await deleteImage(image.id);
 });
 
-previewModal.addEventListener("click", (event) => {
-  if (event.target === previewModal) {
-    closeModal(previewModal);
-  }
-});
-
-pinModal.addEventListener("click", (event) => {
-  if (event.target === pinModal) {
-    closeModal(pinModal);
-  }
-});
-
-uploadModal.addEventListener("click", (event) => {
-  if (event.target === uploadModal) {
-    closeModal(uploadModal);
-  }
+[previewModal, pinModal, uploadModal, uploadingModal, successModal].forEach((modal) => {
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeModal(modal);
+    }
+  });
 });
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -562,8 +511,5 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   setAuthHint("Locked mode.");
   syncManageButtonState();
-
-  const loadingTask = runLoadingOverlay();
   await refreshGallery();
-  await loadingTask;
 });

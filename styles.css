@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+.hidden {
+  display: none !important;
+}
+
 html,
 body {
   width: 100%;
@@ -62,36 +66,39 @@ body {
 .viewport {
   overflow: hidden;
   border-radius: 22px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  background: transparent;
 }
 
 .track {
   display: flex;
   gap: clamp(10px, 1.2vw, 16px);
-  width: 100%;
+  width: max-content;
   transform: translateX(0);
-  animation: slide-loop var(--duration, 16s) linear infinite;
   will-change: transform;
 }
 
-.track.paused {
-  animation-play-state: paused;
+.track.fallback-css-loop {
+  animation: fallback-loop 22s linear infinite;
 }
 
 .slide {
-  flex: 0 0 calc((100% - (2 * clamp(10px, 1.2vw, 16px))) / 3);
-  min-width: calc((100% - (2 * clamp(10px, 1.2vw, 16px))) / 3);
-  max-width: calc((100% - (2 * clamp(10px, 1.2vw, 16px))) / 3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 clamp(220px, 30vw, 360px);
+  min-width: clamp(220px, 30vw, 360px);
+  max-width: clamp(220px, 30vw, 360px);
 }
 
 .card {
   position: relative;
-  width: 100%;
+  width: auto;
+  flex-shrink: 0;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
+  border: none;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.2);
   background: var(--surface-solid);
   cursor: pointer;
 }
@@ -105,53 +112,12 @@ body {
 }
 
 .card img {
-  width: 100%;
-  height: clamp(240px, 38vw, 420px);
-  object-fit: cover;
+  width: auto;
+  height: auto;
+  max-width: min(34vw, 420px);
+  max-height: min(62vh, 520px);
+  object-fit: contain;
   display: block;
-}
-
-.carousel-controls {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.carousel-nav {
-  pointer-events: auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  margin: 0 10px;
-  font-size: 1.1rem;
-  line-height: 1;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--text);
-  box-shadow: var(--shadow);
-}
-
-.zoom-controls {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  z-index: 30;
-  display: inline-flex;
-  gap: 8px;
-}
-
-.zoom-controls button {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  padding: 0;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 1.35rem;
-  font-weight: 500;
 }
 
 #manageBtn {
@@ -181,8 +147,17 @@ body {
 }
 
 .btn-icon {
-  font-size: 1rem;
-  line-height: 1;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 
 .modal {
@@ -209,6 +184,60 @@ body {
   background: var(--surface-solid);
   box-shadow: var(--shadow);
   padding: 16px;
+}
+
+.pin-content {
+  width: min(420px, 100%);
+  margin-top: 52px;
+  text-align: center;
+  position: relative;
+  border-radius: 10px;
+}
+
+.pin-avatar {
+  position: absolute;
+  left: 50%;
+  top: -52px;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  background: #63c6c4;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+}
+
+.pin-avatar .icon {
+  width: 48px;
+  height: 48px;
+}
+
+.pin-subtitle {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.pin-controls {
+  flex-direction: column;
+}
+
+.pin-controls input,
+.pin-controls button {
+  width: 100%;
+}
+
+.icon-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0;
 }
 
 .modal-content h2 {
@@ -309,26 +338,16 @@ button,
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
 }
 
-#loadingOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at 50% 30%, rgba(148, 163, 184, 0.22), transparent 42%),
-    rgba(248, 250, 252, 0.94);
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 400ms ease, visibility 400ms ease;
-}
-
-#loadingOverlay.hide {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+.preview-actions .btn-download,
+.preview-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 #uploadingHint {
@@ -336,31 +355,11 @@ button,
   margin: 8px 0;
 }
 
-.loading-panel {
-  text-align: center;
-  color: var(--text);
-  font-weight: 500;
-}
-
-#loadingPercent {
-  font-size: 1.4rem;
-  margin-top: 8px;
-}
-
-@keyframes slide-loop {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-1 * (100% / 3) - clamp(10px, 1.2vw, 16px)));
-  }
-}
-
 @media (max-width: 860px) {
   .slide {
-    flex-basis: calc((100% - clamp(10px, 1.2vw, 16px)) / 2);
-    min-width: calc((100% - clamp(10px, 1.2vw, 16px)) / 2);
-    max-width: calc((100% - clamp(10px, 1.2vw, 16px)) / 2);
+    flex-basis: clamp(210px, 44vw, 340px);
+    min-width: clamp(210px, 44vw, 340px);
+    max-width: clamp(210px, 44vw, 340px);
   }
 
   .manage-controls {
@@ -380,9 +379,14 @@ button,
   }
 
   .slide {
-    flex-basis: 100%;
-    min-width: 100%;
-    max-width: 100%;
+    flex-basis: clamp(220px, 86vw, 360px);
+    min-width: clamp(220px, 86vw, 360px);
+    max-width: clamp(220px, 86vw, 360px);
+  }
+
+  .card img {
+    max-width: 88vw;
+    max-height: 52vh;
   }
 
   #manageBtn {
@@ -391,15 +395,20 @@ button,
     padding: 10px 14px;
   }
 
-  .zoom-controls {
-    left: 12px;
-    bottom: 12px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .track {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    will-change: auto;
+  }
+}
+
+@keyframes fallback-loop {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
   }
 }
