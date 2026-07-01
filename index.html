@@ -3,59 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Memos Collage</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <title>Memos</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="page-glow" aria-hidden="true"></div>
+    <div id="loadingOverlay" aria-live="polite">
+      <div class="loading-panel">
+        <p>Preparing photos...</p>
+        <p id="loadingPercent">0%</p>
+      </div>
+    </div>
 
-    <main class="shell">
-      <header class="hero">
-        <p class="eyebrow">Shared memory wall</p>
-        <h1>Animated moments collage</h1>
-        <p class="subtitle">
-          Endless horizontal photo cards inspired by your reference layout.
-          Upload and delete are protected by your admin PIN.
-        </p>
-      </header>
+    <main id="marquee" aria-label="Photo wall"></main>
 
-      <section class="admin-panel" aria-label="Admin controls">
-        <div class="admin-lock" id="adminLockPanel">
-          <label for="pinInput">Admin PIN</label>
-          <div class="row">
-            <input id="pinInput" type="password" placeholder="Enter shared PIN" />
-            <button id="unlockBtn" type="button">Unlock</button>
-          </div>
-          <p class="hint" id="authHint">Locked mode: upload and delete are hidden.</p>
+    <button id="manageBtn" type="button">
+      <span id="manageBtnIcon" class="btn-icon" aria-hidden="true">🗂️</span>
+      <span id="manageBtnLabel">Manage Photos</span>
+    </button>
+
+    <div id="pinModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+      <div class="modal-content">
+        <h2 id="pinTitle">Manage Photos</h2>
+
+        <label for="pinInput">PIN</label>
+        <div class="manage-controls">
+          <input id="pinInput" type="password" inputmode="numeric" placeholder="Enter admin PIN" />
+          <button id="unlockBtn" type="button">Unlock</button>
+        </div>
+        <p id="authHint"></p>
+
+        <button id="closePinBtn" type="button">Close</button>
+      </div>
+    </div>
+
+    <div id="uploadModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
+      <div class="modal-content">
+        <h2 id="uploadTitle">Upload Photos</h2>
+
+        <label for="uploadInput">Add photo files (max 10)</label>
+        <div class="manage-controls">
+          <input id="uploadInput" type="file" accept="image/*" multiple />
+          <button id="uploadBtn" type="button">Upload</button>
         </div>
 
-        <div class="admin-upload hidden" id="adminUploadPanel">
-          <label for="uploadInput">Upload image</label>
-          <div class="row">
-            <input id="uploadInput" type="file" accept="image/*" />
-            <button id="uploadBtn" type="button">Upload</button>
-          </div>
-          <p class="hint">
-            Max 32 MB per image. Uploaded photos are shared with all visitors.
-          </p>
-        </div>
-      </section>
+        <div id="manageList" class="manage-list"></div>
+        <button id="closeUploadBtn" type="button">Close</button>
+      </div>
+    </div>
 
-      <section class="marquee-wrap" aria-label="Photo collage">
-        <div class="marquee" id="marquee"></div>
-      </section>
-    </main>
+    <div id="uploadingModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="uploadingTitle">
+      <div class="modal-content">
+        <h2 id="uploadingTitle">Uploading Photos</h2>
+        <p id="uploadingHint">Checking uploaded files...</p>
+        <div id="uploadingList" class="manage-list"></div>
+      </div>
+    </div>
+
+    <div id="successModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+      <div class="modal-content">
+        <h2 id="successTitle">Thanks Elie :P</h2>
+        <p>Upload successful. Refreshing...</p>
+      </div>
+    </div>
+
+    <div id="previewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="previewCaption">
+      <div class="modal-content preview-content">
+        <img id="previewImage" alt="Preview" />
+        <p id="previewCaption"></p>
+        <div class="preview-actions">
+          <a id="downloadBtn" class="btn-download" href="#" download>Download</a>
+          <button id="previewDeleteBtn" class="btn-danger" type="button">Delete</button>
+          <button id="closePreviewBtn" type="button">Close</button>
+        </div>
+      </div>
+    </div>
 
     <template id="cardTemplate">
       <article class="card">
-        <img loading="lazy" alt="" />
-        <button class="delete-btn" type="button" aria-label="Delete image">Delete</button>
+        <img class="photo" loading="lazy" alt="" />
       </article>
     </template>
 
