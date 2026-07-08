@@ -31,11 +31,8 @@ exports.handler = async function handler(event) {
     if (image.deleteUrl) {
       try {
         await fetch(image.deleteUrl, { method: "GET" });
-      } catch (_error) {
-        return json(502, {
-          ok: false,
-          error: "Unable to delete image from ImgBB."
-        });
+      } catch (err) {
+        console.warn("Unable to delete image from ImgBB directly:", err);
       }
     }
 

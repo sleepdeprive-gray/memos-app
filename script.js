@@ -1,6 +1,5 @@
 const TOKEN_STORAGE_KEY = "memos_admin_token";
 const TOKEN_EXP_STORAGE_KEY = "memos_admin_token_exp";
-const CAROUSEL_VISIBLE_COUNT = 3;
 
 const PLACEHOLDER_IMAGES = [
   { id: "ph-1015", source: "placeholder", title: "Placeholder 1", url: "https://picsum.photos/id/1015/1200/900", thumbUrl: "https://picsum.photos/id/1015/600/400" },
@@ -102,7 +101,13 @@ function imageKey(image) {
 }
 
 function allImages() {
-  return [...state.uploadedImages, ...PLACEHOLDER_IMAGES];
+  if (state.uploadedImages.length > 0) {
+    if (state.uploadedImages.length < 3) {
+      return [...state.uploadedImages, ...PLACEHOLDER_IMAGES.slice(0, 3 - state.uploadedImages.length)];
+    }
+    return state.uploadedImages;
+  }
+  return PLACEHOLDER_IMAGES;
 }
 
 async function apiRequest(path, options = {}) {
@@ -141,7 +146,8 @@ async function fetchUploadedImages() {
         thumbUrl: String(item.thumbUrl || item.url || "")
       }))
       .filter((item) => item.id && item.url);
-  } catch (_error) {
+  } catch (error) {
+    console.error("Failed to fetch uploaded images from backend:", error);
     state.uploadedImages = [];
   }
 }
@@ -166,60 +172,49 @@ function renderUploadingList(items) {
   });
 }
 
-function startSmoothLoop(track) {
-  track.classList.add("fallback-css-loop");
-
-  let rafId = 0;
-  let lastTs = 0;
-  let offset = 0;
-  const speedPxPerSecond = 42;
-
-  const step = (ts) => {
-    if (!lastTs) {
-      lastTs = ts;
+function getSpiralCoordinates(index) {
+  if (index === 0) return { x: 0, y: 0 };
+  
+  // Walk spiraling outward
+  let x = 0;
+  let y = 0;
+  let dx = 1;
+  let dy = 0;
+  let segmentLength = 1;
+  let segmentPassed = 0;
+  let segmentChanges = 0;
+  
+  for (let i = 0; i < index; i++) {
+    x += dx;
+    y += dy;
+    segmentPassed++;
+    if (segmentPassed === segmentLength) {
+      segmentPassed = 0;
+      // Change direction: (1,0) -> (0,1) -> (-1,0) -> (0,-1)
+      if (dx === 1 && dy === 0) {
+        dx = 0; dy = 1;
+      } else if (dx === 0 && dy === 1) {
+        dx = -1; dy = 0;
+      } else if (dx === -1 && dy === 0) {
+        dx = 0; dy = -1;
+      } else if (dx === 0 && dy === -1) {
+        dx = 1; dy = 0;
+      }
+      
+      segmentChanges++;
+      if (segmentChanges % 2 === 0) {
+        segmentLength++;
+      }
     }
-
-    const elapsed = (ts - lastTs) / 1000;
-    lastTs = ts;
-    offset += speedPxPerSecond * elapsed;
-
-    const half = track.scrollWidth / 2;
-    if (half <= 0) {
-      rafId = requestAnimationFrame(step);
-      return;
-    }
-
-    if (half > 0 && offset >= half) {
-      offset -= half;
-    }
-
-    track.style.transform = `translate3d(${-offset}px, 0, 0)`;
-    rafId = requestAnimationFrame(step);
-  };
-
-  const stop = () => {
-    if (rafId) {
-      cancelAnimationFrame(rafId);
-      rafId = 0;
-    }
-  };
-
-  track.addEventListener("mouseenter", stop);
-  track.addEventListener("mouseleave", () => {
-    lastTs = 0;
-    if (!rafId) {
-      rafId = requestAnimationFrame(step);
-    }
-  });
-
-  rafId = requestAnimationFrame(step);
+  }
+  return { x, y };
 }
 
 function renderWall() {
   marqueeEl.innerHTML = "";
   state.imageMap.clear();
 
-  const images = allImages().slice(0, CAROUSEL_VISIBLE_COUNT);
+  const images = allImages();
   if (!images.length) {
     return;
   }
@@ -228,37 +223,51 @@ function renderWall() {
     state.imageMap.set(imageKey(image), image);
   });
 
-  const carousel = document.createElement("section");
-  carousel.className = "carousel";
-
-  const viewport = document.createElement("div");
-  viewport.className = "viewport";
-
-  const track = document.createElement("div");
-  track.className = "track";
-
-  const sequence = images.concat(images);
-  sequence.forEach((image) => {
-    const slide = document.createElement("div");
-    slide.className = "slide";
-
-    const card = cardTemplate.content.firstElementChild.cloneNode(true);
-    const key = imageKey(image);
-    card.dataset.key = key;
-
-    const img = card.querySelector("img");
-    img.src = image.thumbUrl || image.url;
-    img.alt = image.title || "Memos photo";
-
-    slide.appendChild(card);
-    track.appendChild(slide);
+  const coords = images.map((image, index) => {
+    const coord = getSpiralCoordinates(index);
+    return {
+      image,
+      key: imageKey(image),
+      x: coord.x,
+      y: coord.y
+    };
   });
 
-  viewport.appendChild(track);
-  carousel.appendChild(viewport);
-  marqueeEl.appendChild(carousel);
+  let minX = 0, maxX = 0;
+  let minY = 0, maxY = 0;
+  coords.forEach((c) => {
+    if (c.x < minX) minX = c.x;
+    if (c.x > maxX) maxX = c.x;
+    if (c.y < minY) minY = c.y;
+    if (c.y > maxY) maxY = c.y;
+  });
 
-  startSmoothLoop(track);
+  const cols = maxX - minX + 1;
+  const rows = maxY - minY + 1;
+
+  const collage = document.createElement("div");
+  collage.className = "collage-grid";
+  collage.style.gridTemplateColumns = `repeat(${cols}, min-content)`;
+  collage.style.gridTemplateRows = `repeat(${rows}, min-content)`;
+
+  coords.forEach((c) => {
+    const card = cardTemplate.content.firstElementChild.cloneNode(true);
+    card.dataset.key = c.key;
+
+    // Shift coordinates so they map to 1-based CSS grid tracks (1 to cols / 1 to rows)
+    const colIndex = c.x - minX + 1;
+    const rowIndex = c.y - minY + 1;
+    card.style.gridColumn = colIndex;
+    card.style.gridRow = rowIndex;
+
+    const img = card.querySelector("img");
+    img.src = c.image.thumbUrl || c.image.url;
+    img.alt = c.image.title || "Memos photo";
+
+    collage.appendChild(card);
+  });
+
+  marqueeEl.appendChild(collage);
 }
 
 function renderManageList() {
@@ -305,6 +314,34 @@ function renderManageList() {
     row.appendChild(actions);
     manageList.appendChild(row);
   });
+}
+
+async function downloadCrossOriginImage(url, filename) {
+  try {
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.style.opacity = "0.7";
+    downloadBtn.style.pointerEvents = "none";
+    downloadBtn.innerHTML = `Downloading...`;
+
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+
+    downloadBtn.style.opacity = "1";
+    downloadBtn.style.pointerEvents = "auto";
+    downloadBtn.innerHTML = originalText;
+  } catch (error) {
+    console.error("Direct download failed, falling back to opening in a new tab:", error);
+    window.open(url, "_blank");
+  }
 }
 
 function openPreview(key) {
@@ -470,6 +507,21 @@ closeUploadBtn.addEventListener("click", () => closeModal(uploadModal));
 closePreviewBtn.addEventListener("click", () => closeModal(previewModal));
 unlockBtn.addEventListener("click", unlockWithPin);
 uploadBtn.addEventListener("click", uploadPhoto);
+
+pinInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    unlockWithPin();
+  }
+});
+
+downloadBtn.addEventListener("click", async (event) => {
+  event.preventDefault();
+  const image = state.imageMap.get(state.selectedKey);
+  if (image) {
+    const filename = `${(image.title || "memos-photo").replace(/\s+/g, "-").toLowerCase()}.jpg`;
+    await downloadCrossOriginImage(image.url, filename);
+  }
+});
 
 manageList.addEventListener("click", async (event) => {
   const button = event.target.closest("button");

@@ -1,15 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --bg: #f4f5f7;
-  --surface: rgba(255, 255, 255, 0.84);
-  --surface-solid: #ffffff;
-  --surface-soft: rgba(255, 255, 255, 0.7);
-  --line: rgba(15, 23, 42, 0.12);
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #0f172a;
-  --danger: #b91c1c;
-  --danger-strong: #991b1b;
-  --shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+  --bg: #090d16;
+  --surface: rgba(17, 24, 39, 0.85);
+  --surface-solid: #111827;
+  --surface-soft: rgba(31, 41, 55, 0.7);
+  --line: rgba(255, 255, 255, 0.08);
+  --text: #f3f4f6;
+  --muted: #9ca3af;
+  --accent: #6366f1;
+  --danger: #ef4444;
+  --danger-strong: #b91c1c;
+  --shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -30,77 +32,44 @@ body {
   margin: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 10% 0%, rgba(148, 163, 184, 0.16), transparent 35%),
-    radial-gradient(circle at 90% 100%, rgba(203, 213, 225, 0.2), transparent 40%),
-    linear-gradient(170deg, #f8fafc, var(--bg));
+    radial-gradient(circle at 10% 0%, rgba(99, 102, 241, 0.15), transparent 45%),
+    radial-gradient(circle at 90% 100%, rgba(139, 92, 246, 0.15), transparent 45%),
+    linear-gradient(170deg, #070a12, var(--bg));
   color: var(--text);
-  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Outfit", "Segoe UI", sans-serif;
 }
 
 #marquee {
   position: fixed;
   inset: 0;
+  display: flex;
+  overflow: auto;
+  padding: 80px;
+  background-color: var(--bg);
+  scroll-behavior: smooth;
+}
+
+.collage-grid {
   display: grid;
-  place-items: center;
-  padding: clamp(12px, 2vw, 24px);
-  overflow: hidden;
-}
-
-#marquee::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(to right, rgba(248, 250, 252, 0.92), transparent 18%, transparent 82%, rgba(248, 250, 252, 0.92)),
-    linear-gradient(to bottom, rgba(248, 250, 252, 0.84), transparent 12%, transparent 88%, rgba(248, 250, 252, 0.84));
-  z-index: 2;
-}
-
-.carousel {
-  position: relative;
-  width: min(1120px, 94vw);
-  z-index: 3;
-}
-
-.viewport {
-  overflow: hidden;
-  border-radius: 22px;
-  border: none;
-  background: transparent;
-}
-
-.track {
-  display: flex;
-  gap: clamp(10px, 1.2vw, 16px);
-  width: max-content;
-  transform: translateX(0);
-  will-change: transform;
-}
-
-.track.fallback-css-loop {
-  animation: fallback-loop 22s linear infinite;
-}
-
-.slide {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 0 0 clamp(220px, 30vw, 360px);
-  min-width: clamp(220px, 30vw, 360px);
-  max-width: clamp(220px, 30vw, 360px);
+  gap: clamp(12px, 2.5vw, 24px);
+  margin: auto;
+  padding: 80px;
 }
 
 .card {
   position: relative;
-  width: auto;
-  flex-shrink: 0;
-  border-radius: 14px;
+  width: clamp(130px, 18vw, 240px);
+  height: auto;
+  border-radius: 16px;
   overflow: hidden;
-  border: none;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.2);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   background: var(--surface-solid);
   cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+  z-index: 1;
+  align-self: center;
+  justify-self: center;
 }
 
 .card::after {
@@ -108,16 +77,24 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.08), rgba(255, 255, 255, 0));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent);
 }
 
 .card img {
-  width: auto;
+  width: 100%;
   height: auto;
-  max-width: min(34vw, 420px);
-  max-height: min(62vh, 520px);
-  object-fit: contain;
   display: block;
+}
+
+.card:hover {
+  transform: scale(1.16) rotate(3deg);
+  box-shadow: 0 28px 56px rgba(0, 0, 0, 0.65);
+  z-index: 10;
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.card:nth-child(even):hover {
+  transform: scale(1.16) rotate(-3deg);
 }
 
 #manageBtn {
@@ -187,31 +164,33 @@ body {
 }
 
 .pin-content {
-  width: min(420px, 100%);
+  width: min(380px, 100%);
   margin-top: 52px;
   text-align: center;
   position: relative;
-  border-radius: 10px;
+  border-radius: 18px;
+  padding: 44px 24px 24px;
 }
 
 .pin-avatar {
   position: absolute;
   left: 50%;
-  top: -52px;
+  top: -48px;
   transform: translateX(-50%);
   width: 96px;
   height: 96px;
   border-radius: 999px;
-  background: #63c6c4;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  border: 4px solid var(--surface-solid);
 }
 
 .pin-avatar .icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
 }
 
 .pin-subtitle {
@@ -220,7 +199,10 @@ body {
 }
 
 .pin-controls {
+  display: flex;
   flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .pin-controls input,
@@ -230,14 +212,20 @@ body {
 
 .icon-close {
   position: absolute;
-  right: 10px;
-  top: 10px;
+  right: 14px;
+  top: 14px;
   border: none;
   background: transparent;
-  color: #9ca3af;
-  font-size: 1.5rem;
+  color: var(--muted);
+  font-size: 1.6rem;
   line-height: 1;
   padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.icon-close:hover {
+  color: var(--text);
 }
 
 .modal-content h2 {
@@ -262,7 +250,7 @@ input[type="file"] {
   width: 100%;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: #1f2937;
   color: var(--text);
   padding: 9px 10px;
   font-weight: 500;
@@ -278,6 +266,13 @@ button,
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+button:hover,
+.btn-download:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
 }
 
 .btn-danger {
@@ -317,14 +312,21 @@ button,
 }
 
 .preview-content {
-  width: min(940px, 100%);
+  width: fit-content;
+  max-width: min(940px, 94vw);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
 }
 
 #previewImage {
-  width: 100%;
-  max-height: 62vh;
-  object-fit: contain;
-  background: #e2e8f0;
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  background: #090d16;
   border-radius: 12px;
   border: 1px solid var(--line);
 }
@@ -356,12 +358,6 @@ button,
 }
 
 @media (max-width: 860px) {
-  .slide {
-    flex-basis: clamp(210px, 44vw, 340px);
-    min-width: clamp(210px, 44vw, 340px);
-    max-width: clamp(210px, 44vw, 340px);
-  }
-
   .manage-controls {
     flex-direction: column;
   }
@@ -378,37 +374,18 @@ button,
     grid-template-columns: 1fr;
   }
 
-  .slide {
-    flex-basis: clamp(220px, 86vw, 360px);
-    min-width: clamp(220px, 86vw, 360px);
-    max-width: clamp(220px, 86vw, 360px);
-  }
-
-  .card img {
-    max-width: 88vw;
-    max-height: 52vh;
-  }
-
   #manageBtn {
     right: 12px;
     bottom: 12px;
     padding: 10px 14px;
   }
-
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .track {
-    will-change: auto;
+  
+  #marquee {
+    padding: 24px;
   }
-}
-
-@keyframes fallback-loop {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-50%);
+  
+  .collage-grid {
+    padding: 40px;
+    gap: 12px;
   }
 }
