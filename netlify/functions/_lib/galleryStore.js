@@ -5,17 +5,23 @@ const STORE_NAME = "gallery";
 const IMAGE_PREFIX = "image:";
 const LOCAL_STORE_FILE = path.join(process.cwd(), "local_gallery_store.json");
 
+let INLINED_STORE = {};
+try {
+  INLINED_STORE = require("../../../local_gallery_store.json");
+} catch (_err) {
+  // Ignore error if file is missing
+}
+
 function readLocalStore() {
   try {
-    if (!fs.existsSync(LOCAL_STORE_FILE)) {
-      return {};
+    if (fs.existsSync(LOCAL_STORE_FILE)) {
+      const data = fs.readFileSync(LOCAL_STORE_FILE, "utf8");
+      return JSON.parse(data || "{}");
     }
-    const data = fs.readFileSync(LOCAL_STORE_FILE, "utf8");
-    return JSON.parse(data || "{}");
   } catch (err) {
-    console.error("Failed to read local store:", err);
-    return {};
+    console.error("Failed to read local store file, using inlined fallback:", err);
   }
+  return INLINED_STORE;
 }
 
 function writeLocalStore(data) {
@@ -34,8 +40,23 @@ async function listImages() {
   try {
     const { getStore } = require("@netlify/blobs");
     const store = getStore(STORE_NAME);
-    const listed = await store.list({ prefix: IMAGE_PREFIX });
-    const blobs = listed && Array.isArray(listed.blobs) ? listed.blobs : [];
+    let listed = await store.list({ prefix: IMAGE_PREFIX });
+    let blobs = listed && Array.isArray(listed.blobs) ? listed.blobs : [];
+
+    // If Netlify Blobs is empty, seed it with the initial images from our local store
+    if (blobs.length === 0) {
+      const localData = readLocalStore();
+      const localItems = Object.values(localData).filter((item) => item && item.id);
+      if (localItems.length > 0) {
+        console.log(`Seeding Netlify Blobs store with ${localItems.length} items from local store.`);
+        await Promise.all(
+          localItems.map(async (item) => store.setJSON(makeKey(item.id), item))
+        );
+        // Refresh the list
+        listed = await store.list({ prefix: IMAGE_PREFIX });
+        blobs = listed && Array.isArray(listed.blobs) ? listed.blobs : [];
+      }
+    }
 
     const items = await Promise.all(
       blobs.map(async (blob) => store.get(blob.key, { type: "json" }))
