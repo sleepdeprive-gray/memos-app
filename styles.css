@@ -311,7 +311,7 @@ button:hover,
   max-width: 56%;
 }
 
-.preview-content {
+.modal-content.preview-content {
   width: fit-content;
   max-width: min(940px, 94vw);
   display: flex;

@@ -214,9 +214,15 @@ function renderWall() {
   marqueeEl.innerHTML = "";
   state.imageMap.clear();
 
-  const images = allImages();
+  const images = [...allImages()];
   if (!images.length) {
     return;
+  }
+
+  // Shuffle images to randomize the spiral arrangement on load/refresh
+  for (let i = images.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [images[i], images[j]] = [images[j], images[i]];
   }
 
   images.forEach((image) => {
@@ -261,7 +267,7 @@ function renderWall() {
     card.style.gridRow = rowIndex;
 
     const img = card.querySelector("img");
-    img.src = c.image.thumbUrl || c.image.url;
+    img.src = c.image.url;
     img.alt = c.image.title || "Memos photo";
 
     collage.appendChild(card);
