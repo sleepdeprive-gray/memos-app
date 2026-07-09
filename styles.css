@@ -425,8 +425,7 @@ button:hover,
   }
 
   #manageBtn {
-    right: 12px;
-    bottom: 12px;
+    bottom: 16px;
     padding: 10px 14px;
   }
   
