@@ -141,7 +141,7 @@ async function apiRequest(path, options = {}) {
 
 async function fetchUploadedImages() {
   try {
-    const payload = await apiRequest("/api/list-images", { method: "GET", headers: {} });
+    const payload = await apiRequest(`/api/list-images?t=${Date.now()}`, { method: "GET", headers: {} });
     const images = Array.isArray(payload.images) ? payload.images : [];
     state.uploadedImages = images
       .map((item) => ({
