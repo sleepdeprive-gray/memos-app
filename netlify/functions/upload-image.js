@@ -8,6 +8,13 @@ function sanitizeBase64(base64) {
 }
 
 exports.handler = async function handler(event) {
+  try {
+    const { connectLambda } = require("@netlify/blobs");
+    connectLambda(event);
+  } catch (_err) {
+    // Ignore error in local or unlinked environment
+  }
+
   if (event.httpMethod !== "POST") {
     return json(405, { ok: false, error: "Method not allowed." });
   }

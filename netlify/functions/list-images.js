@@ -2,6 +2,13 @@ const { json } = require("./_lib/http");
 const { listImages } = require("./_lib/galleryStore");
 
 exports.handler = async function handler(event) {
+  try {
+    const { connectLambda } = require("@netlify/blobs");
+    connectLambda(event);
+  } catch (_err) {
+    // Ignore error in local or unlinked environment
+  }
+
   if (event.httpMethod !== "GET") {
     return json(405, { ok: false, error: "Method not allowed." });
   }
