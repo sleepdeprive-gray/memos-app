@@ -439,7 +439,7 @@ button:hover,
   }
 
   .card {
-    flex: 0 1 clamp(150px, 40vw, 280px);
+    flex: 0 1 clamp(130px, 35vw, 220px);
   }
 }
 
@@ -454,7 +454,7 @@ button:hover,
   }
 
   .card {
-    flex: 0 1 clamp(200px, 80vw, 360px);
+    flex: 0 1 clamp(160px, 65vw, 280px);
   }
 }
 
