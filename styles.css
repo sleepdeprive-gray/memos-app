@@ -50,15 +50,21 @@ body {
 }
 
 .collage-grid {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: clamp(12px, 2.5vw, 24px);
   margin: auto;
   padding: 80px;
+  justify-content: center;
+  align-items: center;
+  max-width: 1600px;
+  width: 100%;
 }
 
 .card {
   position: relative;
-  width: clamp(130px, 18vw, 240px);
+  flex: 0 1 clamp(130px, 18vw, 240px);
+  width: 100%;
   height: auto;
   border-radius: 16px;
   overflow: hidden;
@@ -68,8 +74,6 @@ body {
   cursor: pointer;
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
   z-index: 1;
-  align-self: center;
-  justify-self: center;
 }
 
 .card::after {
@@ -387,5 +391,24 @@ button:hover,
   .collage-grid {
     padding: 40px;
     gap: 12px;
+  }
+
+  .card {
+    flex: 0 1 clamp(75px, 20vw, 120px);
+  }
+}
+
+@media (max-width: 480px) {
+  #marquee {
+    padding: 12px;
+  }
+
+  .collage-grid {
+    padding: 20px;
+    gap: 8px;
+  }
+
+  .card {
+    flex: 0 1 clamp(55px, 25vw, 90px);
   }
 }

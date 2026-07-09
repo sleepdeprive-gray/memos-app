@@ -172,44 +172,6 @@ function renderUploadingList(items) {
   });
 }
 
-function getSpiralCoordinates(index) {
-  if (index === 0) return { x: 0, y: 0 };
-  
-  // Walk spiraling outward
-  let x = 0;
-  let y = 0;
-  let dx = 1;
-  let dy = 0;
-  let segmentLength = 1;
-  let segmentPassed = 0;
-  let segmentChanges = 0;
-  
-  for (let i = 0; i < index; i++) {
-    x += dx;
-    y += dy;
-    segmentPassed++;
-    if (segmentPassed === segmentLength) {
-      segmentPassed = 0;
-      // Change direction: (1,0) -> (0,1) -> (-1,0) -> (0,-1)
-      if (dx === 1 && dy === 0) {
-        dx = 0; dy = 1;
-      } else if (dx === 0 && dy === 1) {
-        dx = -1; dy = 0;
-      } else if (dx === -1 && dy === 0) {
-        dx = 0; dy = -1;
-      } else if (dx === 0 && dy === -1) {
-        dx = 1; dy = 0;
-      }
-      
-      segmentChanges++;
-      if (segmentChanges % 2 === 0) {
-        segmentLength++;
-      }
-    }
-  }
-  return { x, y };
-}
-
 function renderWall() {
   marqueeEl.innerHTML = "";
   state.imageMap.clear();
@@ -219,7 +181,7 @@ function renderWall() {
     return;
   }
 
-  // Shuffle images to randomize the spiral arrangement on load/refresh
+  // Shuffle images to randomize the arrangement on load/refresh
   for (let i = images.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [images[i], images[j]] = [images[j], images[i]];
@@ -229,46 +191,16 @@ function renderWall() {
     state.imageMap.set(imageKey(image), image);
   });
 
-  const coords = images.map((image, index) => {
-    const coord = getSpiralCoordinates(index);
-    return {
-      image,
-      key: imageKey(image),
-      x: coord.x,
-      y: coord.y
-    };
-  });
-
-  let minX = 0, maxX = 0;
-  let minY = 0, maxY = 0;
-  coords.forEach((c) => {
-    if (c.x < minX) minX = c.x;
-    if (c.x > maxX) maxX = c.x;
-    if (c.y < minY) minY = c.y;
-    if (c.y > maxY) maxY = c.y;
-  });
-
-  const cols = maxX - minX + 1;
-  const rows = maxY - minY + 1;
-
   const collage = document.createElement("div");
   collage.className = "collage-grid";
-  collage.style.gridTemplateColumns = `repeat(${cols}, min-content)`;
-  collage.style.gridTemplateRows = `repeat(${rows}, min-content)`;
 
-  coords.forEach((c) => {
+  images.forEach((image) => {
     const card = cardTemplate.content.firstElementChild.cloneNode(true);
-    card.dataset.key = c.key;
-
-    // Shift coordinates so they map to 1-based CSS grid tracks (1 to cols / 1 to rows)
-    const colIndex = c.x - minX + 1;
-    const rowIndex = c.y - minY + 1;
-    card.style.gridColumn = colIndex;
-    card.style.gridRow = rowIndex;
+    card.dataset.key = imageKey(image);
 
     const img = card.querySelector("img");
-    img.src = c.image.url;
-    img.alt = c.image.title || "Memos photo";
+    img.src = image.url;
+    img.alt = image.title || "Memos photo";
 
     collage.appendChild(card);
   });
