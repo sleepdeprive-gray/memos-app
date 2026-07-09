@@ -58,19 +58,20 @@ async function listImages() {
     let listed = await store.list({ prefix: IMAGE_PREFIX });
     let blobs = listed && Array.isArray(listed.blobs) ? listed.blobs : [];
 
-    // If Netlify Blobs is empty, seed it with the initial images from our local store
-    if (blobs.length === 0) {
-      const localData = readLocalStore();
-      const localItems = Object.values(localData).filter((item) => item && item.id);
-      if (localItems.length > 0) {
-        console.log(`Seeding Netlify Blobs store with ${localItems.length} items from local store.`);
-        await Promise.all(
-          localItems.map(async (item) => store.setJSON(makeKey(item.id), item))
-        );
-        // Refresh the list
-        listed = await store.list({ prefix: IMAGE_PREFIX });
-        blobs = listed && Array.isArray(listed.blobs) ? listed.blobs : [];
-      }
+    // Sync any missing local store items into Netlify Blobs
+    const localData = readLocalStore();
+    const localItems = Object.values(localData).filter((item) => item && item.id);
+    const existingKeys = new Set(blobs.map((blob) => blob.key.replace(IMAGE_PREFIX, "")));
+    const missingItems = localItems.filter((item) => !existingKeys.has(item.id));
+
+    if (missingItems.length > 0) {
+      console.log(`Seeding Netlify Blobs store with ${missingItems.length} missing items from local store.`);
+      await Promise.all(
+        missingItems.map(async (item) => store.setJSON(makeKey(item.id), item))
+      );
+      // Refresh the list
+      listed = await store.list({ prefix: IMAGE_PREFIX });
+      blobs = listed && Array.isArray(listed.blobs) ? listed.blobs : [];
     }
 
     const items = await Promise.all(
