@@ -594,7 +594,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     clearSession();
   }
 
-  setAuthHint("Locked mode.");
+  setAuthHint("");
   syncManageButtonState();
   await refreshGallery();
 });

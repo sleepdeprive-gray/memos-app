@@ -55,6 +55,23 @@ function makeKey(id) {
   return `${IMAGE_PREFIX}${id}`;
 }
 
+function cleanAndSort(items) {
+  const sorted = items
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+  const seenUrls = new Set();
+  return sorted.filter((item) => {
+    if (!item.url) return false;
+    const normUrl = item.url.trim().toLowerCase().replace(/^https?:\/\//, "");
+    if (seenUrls.has(normUrl)) {
+      return false;
+    }
+    seenUrls.add(normUrl);
+    return true;
+  });
+}
+
 async function listImages() {
   try {
     if (!shouldCallBlobs()) {
@@ -85,14 +102,12 @@ async function listImages() {
       blobs.map(async (blob) => store.get(blob.key, { type: "json" }))
     );
 
-    return items
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return cleanAndSort(items);
   } catch (error) {
     console.warn("Netlify Blobs is not available, falling back to local file store. Error:", error.message);
     const localData = readLocalStore();
     const items = Object.values(localData).filter((item) => item && item.id);
-    return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return cleanAndSort(items);
   }
 }
 
