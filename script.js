@@ -21,7 +21,8 @@ const state = {
   tokenExp: Number(localStorage.getItem(TOKEN_EXP_STORAGE_KEY) || 0),
   uploadedImages: [],
   imageMap: new Map(),
-  selectedKey: ""
+  selectedKey: "",
+  stagedFiles: []
 };
 
 const marqueeEl = document.getElementById("marquee");
@@ -41,6 +42,7 @@ const unlockBtn = document.getElementById("unlockBtn");
 const authHint = document.getElementById("authHint");
 const uploadInput = document.getElementById("uploadInput");
 const uploadBtn = document.getElementById("uploadBtn");
+const stagedFilesList = document.getElementById("stagedFilesList");
 const manageList = document.getElementById("manageList");
 const uploadingModal = document.getElementById("uploadingModal");
 const uploadingTitle = document.getElementById("uploadingTitle");
@@ -204,18 +206,32 @@ function renderManageList() {
   }
 
   state.uploadedImages.forEach((image) => {
-    const row = document.createElement("div");
-    row.className = "manage-item";
+    const card = document.createElement("div");
+    card.className = "manage-card";
+
+    const imgContainer = document.createElement("div");
+    imgContainer.className = "manage-card-img-container";
+
+    const img = document.createElement("img");
+    img.src = image.thumbUrl || image.url;
+    img.alt = image.title || "Photo";
+    img.className = "manage-card-img";
+
+    imgContainer.appendChild(img);
+
+    const info = document.createElement("div");
+    info.className = "manage-card-info";
 
     const title = document.createElement("span");
+    title.className = "manage-card-title";
     title.textContent = image.title;
 
     const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "8px";
+    actions.className = "manage-card-actions";
 
     const open = document.createElement("button");
     open.type = "button";
+    open.className = "btn-manage-action";
     open.textContent = "Open";
     open.dataset.action = "open";
     open.dataset.key = imageKey(image);
@@ -225,16 +241,19 @@ function renderManageList() {
     if (isAdmin()) {
       const del = document.createElement("button");
       del.type = "button";
-      del.className = "btn-danger";
+      del.className = "btn-danger btn-manage-action";
       del.textContent = "Delete";
       del.dataset.action = "delete";
       del.dataset.id = image.id;
       actions.appendChild(del);
     }
 
-    row.appendChild(title);
-    row.appendChild(actions);
-    manageList.appendChild(row);
+    info.appendChild(title);
+    info.appendChild(actions);
+
+    card.appendChild(imgContainer);
+    card.appendChild(info);
+    manageList.appendChild(card);
   });
 }
 
@@ -365,15 +384,56 @@ async function unlockWithPin() {
   }
 }
 
+function renderStagedFiles() {
+  stagedFilesList.innerHTML = "";
+  if (state.stagedFiles.length === 0) {
+    stagedFilesList.classList.add("hidden");
+    return;
+  }
+  stagedFilesList.classList.remove("hidden");
+
+  const title = document.createElement("div");
+  title.className = "staged-title";
+  title.textContent = `Queued files (${state.stagedFiles.length}/10):`;
+  stagedFilesList.appendChild(title);
+
+  const container = document.createElement("div");
+  container.className = "staged-items-container";
+
+  state.stagedFiles.forEach((file, index) => {
+    const item = document.createElement("div");
+    item.className = "staged-item";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "staged-name";
+    nameSpan.textContent = file.name;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn-remove-staged";
+    removeBtn.innerHTML = "&times;";
+    removeBtn.addEventListener("click", () => {
+      state.stagedFiles.splice(index, 1);
+      renderStagedFiles();
+    });
+
+    item.appendChild(nameSpan);
+    item.appendChild(removeBtn);
+    container.appendChild(item);
+  });
+
+  stagedFilesList.appendChild(container);
+}
+
 async function uploadPhoto() {
   if (!isAdmin()) {
     setAuthHint("Unlock first to upload photos.", true);
     return;
   }
 
-  const files = uploadInput.files ? Array.from(uploadInput.files) : [];
+  const files = state.stagedFiles;
   if (!files.length) {
-    setAuthHint("Pick at least one image file.", true);
+    setAuthHint("Add at least one photo first.", true);
     return;
   }
 
@@ -414,6 +474,8 @@ async function uploadPhoto() {
     uploadingHint.textContent = "All files uploaded successfully!";
 
     uploadInput.value = "";
+    state.stagedFiles = [];
+    renderStagedFiles();
     closeModal(uploadingModal);
 
     successTitle.textContent = "Thanks Elie :P";
@@ -458,10 +520,26 @@ manageBtn.addEventListener("click", () => {
 });
 
 closePinBtn.addEventListener("click", () => closeModal(pinModal));
-closeUploadBtn.addEventListener("click", () => closeModal(uploadModal));
+closeUploadBtn.addEventListener("click", () => {
+  state.stagedFiles = [];
+  renderStagedFiles();
+  closeModal(uploadModal);
+});
 closePreviewBtn.addEventListener("click", () => closeModal(previewModal));
 unlockBtn.addEventListener("click", unlockWithPin);
 uploadBtn.addEventListener("click", uploadPhoto);
+
+uploadInput.addEventListener("change", () => {
+  const newFiles = Array.from(uploadInput.files || []);
+  newFiles.forEach((file) => {
+    const isDup = state.stagedFiles.some((f) => f.name === file.name && f.size === file.size);
+    if (!isDup && state.stagedFiles.length < 10) {
+      state.stagedFiles.push(file);
+    }
+  });
+  uploadInput.value = "";
+  renderStagedFiles();
+});
 
 pinInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
