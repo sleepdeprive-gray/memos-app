@@ -20,6 +20,10 @@ function findProjectRoot() {
 
 const LOCAL_STORE_FILE = path.join(findProjectRoot(), "local_gallery_store.json");
 
+function shouldCallBlobs() {
+  return !process.env.NETLIFY_DEV;
+}
+
 let INLINED_STORE = {};
 try {
   INLINED_STORE = require("../../../local_gallery_store.json");
@@ -53,6 +57,9 @@ function makeKey(id) {
 
 async function listImages() {
   try {
+    if (!shouldCallBlobs()) {
+      throw new Error("Local dev environment - bypassing Blobs");
+    }
     const { getStore } = require("@netlify/blobs");
     const store = getStore(STORE_NAME);
     let listed = await store.list({ prefix: IMAGE_PREFIX });
@@ -91,6 +98,9 @@ async function listImages() {
 
 async function saveImage(item) {
   try {
+    if (!shouldCallBlobs()) {
+      throw new Error("Local dev environment - bypassing Blobs");
+    }
     const { getStore } = require("@netlify/blobs");
     const store = getStore(STORE_NAME);
     await store.setJSON(makeKey(item.id), item);
@@ -106,6 +116,9 @@ async function saveImage(item) {
 
 async function getImage(id) {
   try {
+    if (!shouldCallBlobs()) {
+      throw new Error("Local dev environment - bypassing Blobs");
+    }
     const { getStore } = require("@netlify/blobs");
     const store = getStore(STORE_NAME);
     return await store.get(makeKey(id), { type: "json" });
@@ -118,6 +131,9 @@ async function getImage(id) {
 
 async function removeImage(id) {
   try {
+    if (!shouldCallBlobs()) {
+      throw new Error("Local dev environment - bypassing Blobs");
+    }
     const { getStore } = require("@netlify/blobs");
     const store = getStore(STORE_NAME);
     await store.delete(makeKey(id));
