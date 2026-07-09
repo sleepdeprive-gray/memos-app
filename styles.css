@@ -412,3 +412,65 @@ button:hover,
     flex: 0 1 clamp(55px, 25vw, 90px);
   }
 }
+
+.loading-content,
+.success-content {
+  text-align: center;
+  padding: 32px 24px;
+  width: min(360px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-spinner-container {
+  display: grid;
+  place-items: center;
+  margin: 12px 0;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-percent {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.loading-hint {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.success-icon-container {
+  width: 64px;
+  height: 64px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.success-icon {
+  width: 36px;
+  height: 36px;
+  fill: currentColor;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

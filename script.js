@@ -43,8 +43,12 @@ const uploadInput = document.getElementById("uploadInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const manageList = document.getElementById("manageList");
 const uploadingModal = document.getElementById("uploadingModal");
-const uploadingList = document.getElementById("uploadingList");
+const uploadingTitle = document.getElementById("uploadingTitle");
+const uploadingPercent = document.getElementById("uploadingPercent");
+const uploadingHint = document.getElementById("uploadingHint");
 const successModal = document.getElementById("successModal");
+const successTitle = document.getElementById("successTitle");
+const successHint = document.getElementById("successHint");
 
 const previewModal = document.getElementById("previewModal");
 const previewImage = document.getElementById("previewImage");
@@ -150,26 +154,6 @@ async function fetchUploadedImages() {
     console.error("Failed to fetch uploaded images from backend:", error);
     state.uploadedImages = [];
   }
-}
-
-function renderUploadingList(items) {
-  uploadingList.innerHTML = "";
-  if (!items.length) {
-    const empty = document.createElement("p");
-    empty.textContent = "No files selected.";
-    empty.style.color = "#64748b";
-    uploadingList.appendChild(empty);
-    return;
-  }
-
-  items.forEach((name) => {
-    const row = document.createElement("div");
-    row.className = "manage-item";
-    const title = document.createElement("span");
-    title.textContent = name;
-    row.appendChild(title);
-    uploadingList.appendChild(row);
-  });
 }
 
 function renderWall() {
@@ -306,14 +290,34 @@ async function deleteImage(id) {
     return;
   }
 
-  await apiRequest("/api/delete-image", {
-    method: "POST",
-    body: JSON.stringify({ id })
-  });
+  try {
+    uploadingTitle.textContent = "Wait a bit elie..";
+    uploadingPercent.textContent = "0%";
+    uploadingHint.textContent = "Deleting photo...";
+    openModal(uploadingModal);
+    closeModal(previewModal);
 
-  await refreshGallery();
-  closeModal(previewModal);
-  setAuthHint("Photo deleted.");
+    await apiRequest("/api/delete-image", {
+      method: "POST",
+      body: JSON.stringify({ id })
+    });
+
+    uploadingPercent.textContent = "100%";
+    uploadingHint.textContent = "Deleted successfully!";
+
+    closeModal(uploadingModal);
+
+    successTitle.textContent = "Success";
+    successHint.textContent = "Photo deleted successfully. Refreshing...";
+    openModal(successModal);
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  } catch (error) {
+    closeModal(uploadingModal);
+    setAuthHint(error.message || "Failed to delete photo.", true);
+  }
 }
 
 function fileToBase64(file) {
@@ -383,7 +387,9 @@ async function uploadPhoto() {
     return;
   }
 
-  renderUploadingList(files.map((file) => file.name));
+  uploadingTitle.textContent = "Wait a bit elie..";
+  uploadingPercent.textContent = "0%";
+  uploadingHint.textContent = `Preparing 1 of ${files.length}...`;
   openModal(uploadingModal);
   closeModal(uploadModal);
 
@@ -391,7 +397,12 @@ async function uploadPhoto() {
   uploadBtn.textContent = "Uploading...";
 
   try {
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const percentVal = Math.round((i / files.length) * 100);
+      uploadingPercent.textContent = `${percentVal}%`;
+      uploadingHint.textContent = `Uploading "${file.name}" (${i + 1}/${files.length})...`;
+
       const imageBase64 = await fileToBase64(file);
       await apiRequest("/api/upload-image", {
         method: "POST",
@@ -399,13 +410,19 @@ async function uploadPhoto() {
       });
     }
 
+    uploadingPercent.textContent = "100%";
+    uploadingHint.textContent = "All files uploaded successfully!";
+
     uploadInput.value = "";
-    await refreshGallery();
     closeModal(uploadingModal);
+
+    successTitle.textContent = "Thanks Elie :P";
+    successHint.textContent = "Upload successful. Refreshing...";
     openModal(successModal);
+
     setTimeout(() => {
       window.location.reload();
-    }, 900);
+    }, 1500);
   } catch (error) {
     closeModal(uploadingModal);
     openModal(uploadModal);

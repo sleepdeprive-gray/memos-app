@@ -55,17 +55,25 @@
     </div>
 
     <div id="uploadingModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="uploadingTitle">
-      <div class="modal-content">
-        <h2 id="uploadingTitle">Uploading Photos</h2>
-        <p id="uploadingHint">Checking uploaded files...</p>
-        <div id="uploadingList" class="manage-list"></div>
+      <div class="modal-content loading-content">
+        <h2 id="uploadingTitle">Wait a bit elie..</h2>
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <p id="uploadingPercent" class="loading-percent">0%</p>
+        <p id="uploadingHint" class="loading-hint">Preparing files...</p>
       </div>
     </div>
 
     <div id="successModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="successTitle">
-      <div class="modal-content">
+      <div class="modal-content success-content">
+        <div class="success-icon-container">
+          <svg class="success-icon" viewBox="0 0 24 24">
+            <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+          </svg>
+        </div>
         <h2 id="successTitle">Thanks Elie :P</h2>
-        <p>Upload successful. Refreshing...</p>
+        <p id="successHint">Upload successful. Refreshing...</p>
       </div>
     </div>
 

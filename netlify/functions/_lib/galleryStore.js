@@ -3,7 +3,22 @@ const path = require("path");
 
 const STORE_NAME = "gallery";
 const IMAGE_PREFIX = "image:";
-const LOCAL_STORE_FILE = path.join(process.cwd(), "local_gallery_store.json");
+function findProjectRoot() {
+  let currentDir = __dirname;
+  for (let i = 0; i < 10; i++) {
+    if (fs.existsSync(path.join(currentDir, "netlify.toml")) || fs.existsSync(path.join(currentDir, "package.json"))) {
+      return currentDir;
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+  }
+  return process.cwd();
+}
+
+const LOCAL_STORE_FILE = path.join(findProjectRoot(), "local_gallery_store.json");
 
 let INLINED_STORE = {};
 try {
